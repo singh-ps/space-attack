@@ -2,6 +2,16 @@
 
 // Plain entity records and shared systems. No enemy classes or inheritance.
 const GameSystems = (() => {
+  function emit(state, event) {
+    // Bounded queue; presentation consumes events once per animation frame.
+    if (state.events.length >= 128) state.events.shift();
+    state.events.push(event);
+  }
+
+  function takeEvents(state) {
+    return state.events.splice(0);
+  }
+
   function interval(state) {
     const { intervalMin, intervalMax } = state.config.diving;
     return intervalMin + state.random() * (intervalMax - intervalMin);
@@ -14,6 +24,7 @@ const GameSystems = (() => {
       player: { x: config.width / 2, previousX: config.width / 2, vx: 0,
         y: config.height - 48, cooldown: 0, invulnerable: 0 },
       timer: 0, diveTimer: 0,
+      events: [],
     };
   }
 
@@ -37,6 +48,7 @@ const GameSystems = (() => {
   }
 
   function start(state) {
+    state.events = [];
     state.level = 1;
     state.score = 0;
     state.lives = state.config.player.lives;
@@ -45,12 +57,14 @@ const GameSystems = (() => {
     Object.assign(state.player, { x: state.config.width / 2, previousX: state.config.width / 2,
       vx: 0, cooldown: 0, invulnerable: 0 });
     formation(state);
+    emit(state, { kind: "start" });
   }
 
   function fire(state) {
     if (state.phase !== "playing" || state.player.cooldown > 0) return false;
     state.playerShots.push({ x: state.player.x, y: state.player.y - 24 });
     state.player.cooldown = state.config.player.firing.weaponCooldown;
+    emit(state, { kind: "playerFire" });
     return true;
   }
 
@@ -60,6 +74,7 @@ const GameSystems = (() => {
   }
 
   function loseLife(state) {
+    emit(state, { kind: "blast", type: "player", x: state.player.x, y: state.player.y });
     state.lives--;
     state.playerShots = [];
     state.enemyShots = [];
@@ -71,6 +86,7 @@ const GameSystems = (() => {
     state.diveTimer = interval(state);
     state.phase = state.lives === 0 ? "gameover" : "respawning";
     state.timer = state.config.player.respawnDelay;
+    if (state.phase === "gameover") emit(state, { kind: "gameover" });
   }
 
   function advance(state) {
@@ -78,6 +94,7 @@ const GameSystems = (() => {
     state.timer = state.config.levelDelay;
     state.playerShots = [];
     state.enemyShots = [];
+    emit(state, { kind: state.phase === "won" ? "victory" : "levelup" });
   }
 
   function decideTurn(state, enemy, stats, multiplier) {
@@ -135,6 +152,7 @@ const GameSystems = (() => {
       enemy.weaponTimer -= dt;
       if (enemy.weaponTimer <= 0) {
         state.enemyShots.push({ x: enemy.x, y: enemy.y + stats.radius, speed: stats.firing.speed * multiplier });
+        emit(state, { kind: "enemyFire", type: enemy.type });
         enemy.weaponTimer = stats.firing.weaponCooldown;
       }
     }
@@ -159,6 +177,7 @@ const GameSystems = (() => {
       if (closest) {
         state.score += state.config.enemies[closest.type].score[closest.mode === "flight" ? "flight" : "formation"];
         closest.mode = "dead";
+        emit(state, { kind: "blast", type: closest.type, x: closest.x, y: closest.y });
         shot.dead = true;
       }
     }
@@ -194,6 +213,7 @@ const GameSystems = (() => {
       state.player.invulnerable = state.config.player.invulnerability;
       state.player.previousX = state.player.x;
       state.player.vx = 0;
+      emit(state, { kind: "respawn" });
       return;
     }
     if (state.phase !== "playing") return;
@@ -211,7 +231,7 @@ const GameSystems = (() => {
     if (state.phase === "playing" && state.enemies.every((enemy) => enemy.mode === "dead")) advance(state);
   }
 
-  return { create, start, fire, update };
+  return { create, start, fire, update, takeEvents };
 })();
 
 if (typeof module !== "undefined") module.exports = GameSystems;

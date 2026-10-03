@@ -24,6 +24,7 @@ node --test tests/*.test.js
 - Space: one shot per press, with a 350 ms cooldown. Holding does not fire repeatedly; presses during cooldown are discarded.
 - Touch or mouse: drag to move; tap or click to fire.
 - Escape or Pause: pause/resume. Switching tabs pauses automatically.
+- Sound on / Sound off: mute or enable effects audio.
 
 ## Rules
 
@@ -48,10 +49,14 @@ You have three lives across the run. An enemy or enemy bullet costs one life. Pr
 - `js/config.js`: editable data object for player/enemy stats, weapons, cooldowns (seconds), scoring, formation, dive scheduling, respawns, and five difficulty multipliers. Distances use logical canvas pixels; speeds use pixels/second.
 - `js/systems.js`: simulation systems operating on plain entity records and arrays. No classes or enemy inheritance. All tiers share dive/steer logic and use their own configuration.
 - `js/game.js`: browser input, original canvas graphics, UI, and animation loop.
+- `js/effects.js`: brief ship-colored blasts built from the same hull shapes as the ships, rendered above the arena dimming layer. Blasts freeze during pause and clear on restart.
+- `js/audio.js`: synthesized laser fire, explosions, launch/respawn cues, level completion, defeat, victory, and pause/resume tones. Audio starts after a user interaction; mute stops active sounds. Voices are capped and cleaned up after playback. No audio assets or dependencies.
 - `index.html` and `css/style.css`: page layout, HUD, and game-state overlays.
 - `tests/`: automated gameplay and tier-behavior checks using Node's built-in test runner.
 
 Graphics use distinct silhouettes and colors for each tier. Tier-specific attack patterns are selected by configuration and processed by shared systems.
+
+`effects` and `audio` in `js/config.js` control blast duration, fragment speed, master volume, and the voice limit. Simulation events drive effects once per shot, kill, or transition; rejected fire presses have no sound. Gameplay continues if browser audio is unavailable.
 
 ## Deployment
 

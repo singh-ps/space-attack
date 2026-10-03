@@ -38,6 +38,8 @@ const GAME_CONFIG = {
   },
   diving: { maxConcurrent: 3, intervalMin: 0.9, intervalMax: 1.6, returnDelay: 1.5 },
   levels: [1, 1.1, 1.2, 1.3, 1.4], levelDelay: 2,
+  effects: { enemyBlastDuration: 0.42, playerBlastDuration: 0.6, fragmentSpeed: 65 },
+  audio: { volume: 0.18, maxVoices: 24 },
 };
 
 if (typeof module !== "undefined") module.exports = GAME_CONFIG;

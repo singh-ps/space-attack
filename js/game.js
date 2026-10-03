@@ -2,6 +2,10 @@
 
 const canvas = document.querySelector("#game");
 const ctx = canvas.getContext("2d");
+const effectsCanvas = document.querySelector("#effects");
+const effectsCtx = effectsCanvas.getContext("2d");
+const effects = GameEffects.create(GAME_CONFIG);
+const audio = GameAudio.create(GAME_CONFIG.audio);
 const state = GameSystems.create(GAME_CONFIG);
 const keys = new Set();
 const overlay = document.querySelector("#overlay");
@@ -10,6 +14,7 @@ const kicker = document.querySelector("#status-kicker");
 const message = document.querySelector("#status-message");
 const action = document.querySelector("#start-game");
 const pauseButton = document.querySelector("#pause-game");
+const soundButton = document.querySelector("#sound-game");
 const scoreDisplay = document.querySelector("#score");
 const livesDisplay = document.querySelector("#lives");
 const levelDisplay = document.querySelector("#level");
@@ -19,12 +24,17 @@ let displayedStatus = "";
 let displayedLives = -1;
 canvas.width = GAME_CONFIG.width;
 canvas.height = GAME_CONFIG.height;
+effectsCanvas.width = GAME_CONFIG.width;
+effectsCanvas.height = GAME_CONFIG.height;
 const stars = Array.from({ length: 100 }, () => ({
   x: Math.random() * canvas.width, y: Math.random() * canvas.height,
   speed: 15 + Math.random() * 45, size: 0.5 + Math.random() * 1.5,
 }));
 
 function start() {
+  audio.unlock();
+  audio.stop();
+  effects.blasts = [];
   GameSystems.start(state);
   keys.clear();
   paused = false;
@@ -36,21 +46,33 @@ function togglePause() {
   if (!["playing", "respawning", "levelclear"].includes(state.phase)) return;
   paused = !paused;
   keys.clear();
+  audio.stop();
+  audio.play({ kind: paused ? "pause" : "resume" });
   syncUI();
 }
 
 action.addEventListener("click", () => {
+  audio.unlock();
   if (paused) togglePause();
   else start();
   canvas.focus();
 });
-pauseButton.addEventListener("click", togglePause);
+pauseButton.addEventListener("click", () => { audio.unlock(); togglePause(); });
+soundButton.addEventListener("click", () => {
+  audio.unlock();
+  audio.setMuted(!audio.muted);
+  soundButton.textContent = audio.muted ? "Sound off" : "Sound on";
+  soundButton.setAttribute("aria-pressed", String(audio.muted));
+  soundButton.setAttribute("aria-label", audio.muted ? "Unmute sound" : "Mute sound");
+  canvas.focus();
+});
 
 window.addEventListener("keydown", (event) => {
   if (!["ArrowLeft", "ArrowRight", "KeyA", "KeyD", "Space", "Escape"].includes(event.code)) return;
   // Preserve normal keyboard activation of buttons.
   if (event.target instanceof HTMLButtonElement && event.code === "Space") return;
   event.preventDefault();
+  audio.unlock();
   if (event.code === "Escape") {
     if (!event.repeat) togglePause();
     return;
@@ -62,6 +84,7 @@ window.addEventListener("keyup", (event) => keys.delete(event.code));
 function suspend() {
   keys.clear();
   if (!paused && ["playing", "respawning", "levelclear"].includes(state.phase)) togglePause();
+  audio.stop();
 }
 window.addEventListener("blur", suspend);
 document.addEventListener("visibilitychange", () => { if (document.hidden) suspend(); });
@@ -72,6 +95,7 @@ function movePointer(event) {
   state.player.x = Math.max(24, Math.min(canvas.width - 24, (event.clientX - bounds.left) * canvas.width / bounds.width));
 }
 canvas.addEventListener("pointerdown", (event) => {
+  audio.unlock();
   canvas.focus();
   canvas.setPointerCapture(event.pointerId);
   movePointer(event);
@@ -98,13 +122,13 @@ function drawEnemy(enemy) {
   ctx.translate(enemy.x, enemy.y);
   // Distinct silhouettes facing down. Steering never rotates the sprite.
   if (enemy.type === "delta") {
-    polygon([[-18, -11], [0, -3], [18, -11], [11, 8], [0, 16], [-11, 8]], stats.color);
+    polygon(ShipHulls.delta, stats.color);
     polygon([[-6, -4], [6, -4], [0, 10]], "#15392e");
   } else if (enemy.type === "alpha") {
-    polygon([[-21, -5], [-10, -14], [0, -8], [10, -14], [21, -5], [13, 12], [6, 3], [0, 18], [-6, 3], [-13, 12]], stats.color);
+    polygon(ShipHulls.alpha, stats.color);
     polygon([[-4, -4], [4, -4], [4, 6], [-4, 6]], "#302154");
   } else {
-    polygon([[-24, -7], [-12, -18], [12, -18], [24, -7], [21, 12], [11, 7], [0, 21], [-11, 7], [-21, 12]], stats.color);
+    polygon(ShipHulls.omega, stats.color);
     polygon([[-10, -7], [10, -7], [6, 5], [-6, 5]], "#6b381a");
     ctx.fillStyle = "#fff2c7";
     ctx.fillRect(-3, -5, 6, 9);
@@ -132,11 +156,13 @@ function draw() {
     ctx.save();
     ctx.translate(state.player.x, state.player.y);
     polygon([[-7, 16], [0, 29], [7, 16]], "#ffb45e");
-    polygon([[0, -24], [22, 18], [0, 9], [-22, 18]], "#70e6ef");
+    polygon(ShipHulls.player, "#70e6ef");
     ctx.fillStyle = "#e8fbff";
     ctx.fillRect(-3, -9, 6, 14);
     ctx.restore();
   }
+  effectsCtx.clearRect(0, 0, effectsCanvas.width, effectsCanvas.height);
+  GameEffects.draw(effects, effectsCtx);
 }
 
 function syncUI() {
@@ -181,6 +207,11 @@ function frame(timestamp) {
     const left = keys.has("ArrowLeft") || keys.has("KeyA");
     const right = keys.has("ArrowRight") || keys.has("KeyD");
     GameSystems.update(state, dt, Number(right) - Number(left));
+    GameEffects.update(effects, dt);
+    for (const event of GameSystems.takeEvents(state)) {
+      if (event.kind === "blast") GameEffects.spawn(effects, event);
+      audio.play(event);
+    }
     for (const star of stars) star.y = (star.y + star.speed * dt) % canvas.height;
   }
   draw();

@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="./css/style.css">
     <script src="./js/config.js" defer></script>
     <script src="./js/systems.js" defer></script>
+    <script src="./js/effects.js" defer></script>
+    <script src="./js/audio.js" defer></script>
     <script src="./js/game.js" defer></script>
   </head>
   <body>
@@ -25,12 +27,16 @@
         <div>Score<strong id="score">000000</strong></div>
         <div>Lives<strong id="lives" role="img" aria-label="3 ships remaining"><img class="life-icon" src="./assets/ship.svg" alt=""><img class="life-icon" src="./assets/ship.svg" alt=""><img class="life-icon" src="./assets/ship.svg" alt=""></strong></div>
         <div>Level<strong id="level">1 / 5</strong></div>
-        <button id="pause-game" type="button" disabled>Pause</button>
+        <div class="hud-actions">
+          <button id="sound-game" type="button" aria-pressed="false" aria-label="Mute sound">Sound on</button>
+          <button id="pause-game" type="button" disabled>Pause</button>
+        </div>
       </div>
       <div class="arena">
       <canvas id="game" width="960" height="540" tabindex="0" aria-label="Space Attack. Move with arrow keys or A and D. Press Space once per shot. On touch screens, drag to move and tap to fire.">
         Your browser needs canvas support to play Space Attack.
       </canvas>
+      <canvas id="effects" class="effects-canvas" width="960" height="540" aria-hidden="true"></canvas>
       <div id="overlay" class="overlay" data-state="ready">
         <div class="status-card">
           <p id="status-kicker" class="status-kicker">MISSION BRIEFING</p>
