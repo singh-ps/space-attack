@@ -31,6 +31,16 @@ Each level has six centered rows: 2 Omegas, 5 Alphas, and four rows of 7 Deltas.
 
 Every enemy takes one hit. Delta / Alpha / Omega kills award 100 / 250 / 500 points in formation, doubled in flight. Clear every enemy to advance. Five levels increase movement and projectile speed by 10% per level; clear level five to win.
 
+Tier behavior is controlled by `behavior` data in `js/config.js`:
+
+| Tier | Target at each turn decision | Weapon cooldown | Turn cooldown |
+| --- | --- | --- | --- |
+| Delta | Player's current horizontal position | 1.2 s | 1.2 s |
+| Alpha | Alternating 70 pixels left/right of the player | 1.0 s | 0.8 s |
+| Omega | Player's predicted position 0.45 seconds ahead | 0.9 s | 0.5 s |
+
+Targets stay within the arena. Enemies hold their horizontal direction until the next turn decision. Omega prediction samples actual player movement for both keyboard and pointer controls, capped at player speed so pointer jumps do not create extreme predictions. A stationary player has no predicted offset. All patterns keep constant downward velocity, fixed sprite orientation, and straight-down bullets.
+
 You have three lives across the run. An enemy or enemy bullet costs one life. Projectiles are cleared and surviving enemies return to formation on death; score and kills persist. After a one-second respawn delay, the ship has two seconds of invulnerability, shown by blinking. No lives are refilled between levels. Losing all lives ends the game.
 
 ## Tuning and structure
@@ -39,9 +49,9 @@ You have three lives across the run. An enemy or enemy bullet costs one life. Pr
 - `js/systems.js`: simulation systems operating on plain entity records and arrays. No classes or enemy inheritance. All tiers share dive/steer logic and use their own configuration.
 - `js/game.js`: browser input, original canvas graphics, UI, and animation loop.
 - `index.html` and `css/style.css`: page layout, HUD, and game-state overlays.
-- `tests/systems.test.js`: automated gameplay checks using Node's built-in test runner.
+- `tests/`: automated gameplay and tier-behavior checks using Node's built-in test runner.
 
-Graphics use distinct silhouettes and colors for each tier. Tier-specific attack patterns can be added later to the shared systems.
+Graphics use distinct silhouettes and colors for each tier. Tier-specific attack patterns are selected by configuration and processed by shared systems.
 
 ## Deployment
 

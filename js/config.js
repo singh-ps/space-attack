@@ -11,17 +11,20 @@ const GAME_CONFIG = {
   enemies: {
     delta: {
       type: "delta", color: "#79f2bd", radius: 15, speed: 105, steerSpeed: 85,
-      firing: { speed: 230, weaponCooldown: 2 }, turnCooldown: 1.2,
+      firing: { speed: 230, weaponCooldown: 1.2 }, turnCooldown: 1.2,
+      behavior: { pattern: "track", deadZone: 12 },
       score: { formation: 100, flight: 200 },
     },
     alpha: {
       type: "alpha", color: "#b9a0ff", radius: 17, speed: 105, steerSpeed: 85,
-      firing: { speed: 230, weaponCooldown: 1.4 }, turnCooldown: 0.8,
+      firing: { speed: 230, weaponCooldown: 1 }, turnCooldown: 0.8,
+      behavior: { pattern: "weave", weaveOffset: 70, deadZone: 12 },
       score: { formation: 250, flight: 500 },
     },
     omega: {
       type: "omega", color: "#ffb45e", radius: 20, speed: 105, steerSpeed: 85,
       firing: { speed: 230, weaponCooldown: 0.9 }, turnCooldown: 0.5,
+      behavior: { pattern: "predict", lookAhead: 0.45, deadZone: 12 },
       score: { formation: 500, flight: 1000 },
     },
   },

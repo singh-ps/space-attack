@@ -11,7 +11,8 @@ const GameSystems = (() => {
     return {
       config, random, phase: "ready", level: 1, score: 0,
       lives: config.player.lives, enemies: [], playerShots: [], enemyShots: [],
-      player: { x: config.width / 2, y: config.height - 48, cooldown: 0, invulnerable: 0 },
+      player: { x: config.width / 2, previousX: config.width / 2, vx: 0,
+        y: config.height - 48, cooldown: 0, invulnerable: 0 },
       timer: 0, diveTimer: 0,
     };
   }
@@ -26,6 +27,7 @@ const GameSystems = (() => {
         state.enemies.push({
           type: layout.type, x, y, homeX: x, homeY: y,
           mode: "formation", vx: 0, weaponTimer: 0, turnTimer: 0, returnTimer: 0,
+          turnCount: 0, weaveSide: column % 2 === 0 ? -1 : 1, targetX: x,
         });
       }
     }
@@ -40,7 +42,8 @@ const GameSystems = (() => {
     state.lives = state.config.player.lives;
     state.phase = "playing";
     state.timer = 0;
-    Object.assign(state.player, { x: state.config.width / 2, cooldown: 0, invulnerable: 0 });
+    Object.assign(state.player, { x: state.config.width / 2, previousX: state.config.width / 2,
+      vx: 0, cooldown: 0, invulnerable: 0 });
     formation(state);
   }
 
@@ -52,7 +55,8 @@ const GameSystems = (() => {
   }
 
   function home(enemy) {
-    Object.assign(enemy, { x: enemy.homeX, y: enemy.homeY, mode: "formation", vx: 0 });
+    Object.assign(enemy, { x: enemy.homeX, y: enemy.homeY, mode: "formation", vx: 0,
+      turnCount: 0, targetX: enemy.homeX });
   }
 
   function loseLife(state) {
@@ -61,6 +65,8 @@ const GameSystems = (() => {
     state.enemyShots = [];
     for (const enemy of state.enemies) if (enemy.mode !== "dead") home(enemy);
     state.player.x = state.config.width / 2;
+    state.player.previousX = state.player.x;
+    state.player.vx = 0;
     state.player.cooldown = 0;
     state.diveTimer = interval(state);
     state.phase = state.lives === 0 ? "gameover" : "respawning";
@@ -74,6 +80,22 @@ const GameSystems = (() => {
     state.enemyShots = [];
   }
 
+  function decideTurn(state, enemy, stats, multiplier) {
+    const behavior = stats.behavior;
+    let targetX = state.player.x;
+    if (behavior.pattern === "weave") {
+      const side = enemy.turnCount % 2 === 0 ? enemy.weaveSide : -enemy.weaveSide;
+      targetX += side * behavior.weaveOffset;
+    } else if (behavior.pattern === "predict") {
+      targetX += state.player.vx * behavior.lookAhead;
+    }
+    enemy.targetX = Math.max(stats.radius, Math.min(state.config.width - stats.radius, targetX));
+    const distance = enemy.targetX - enemy.x;
+    enemy.vx = Math.abs(distance) < behavior.deadZone ? 0 : Math.sign(distance) * stats.steerSpeed * multiplier;
+    enemy.turnCount++;
+    enemy.turnTimer = stats.turnCooldown;
+  }
+
   function updateEnemies(state, dt) {
     const { config } = state;
     const multiplier = config.levels[state.level - 1];
@@ -85,6 +107,7 @@ const GameSystems = (() => {
         const enemy = candidates[Math.floor(state.random() * candidates.length)];
         enemy.mode = "flight";
         enemy.turnTimer = 0;
+        enemy.turnCount = 0;
         enemy.weaponTimer = config.enemies[enemy.type].firing.weaponCooldown;
       }
       state.diveTimer = interval(state);
@@ -99,9 +122,7 @@ const GameSystems = (() => {
       if (enemy.mode !== "flight") continue;
       enemy.turnTimer -= dt;
       if (enemy.turnTimer <= 0) {
-        const distance = state.player.x - enemy.x;
-        enemy.vx = Math.abs(distance) < 12 ? 0 : Math.sign(distance) * stats.steerSpeed * multiplier;
-        enemy.turnTimer = stats.turnCooldown;
+        decideTurn(state, enemy, stats, multiplier);
       }
       enemy.x = Math.max(stats.radius, Math.min(config.width - stats.radius, enemy.x + enemy.vx * dt));
       // Steering never changes the constant vertical velocity.
@@ -171,6 +192,8 @@ const GameSystems = (() => {
       }
       state.phase = "playing";
       state.player.invulnerable = state.config.player.invulnerability;
+      state.player.previousX = state.player.x;
+      state.player.vx = 0;
       return;
     }
     if (state.phase !== "playing") return;
@@ -178,6 +201,11 @@ const GameSystems = (() => {
     player.cooldown = Math.max(0, player.cooldown - dt);
     player.invulnerable = Math.max(0, player.invulnerable - dt);
     player.x = Math.max(24, Math.min(config.width - 24, player.x + direction * config.player.speed * dt));
+    // Sample actual movement for keyboard and pointer input. Clamp pointer jumps
+    // to the ship's speed so prediction remains fair for every input method.
+    const velocity = dt > 0 ? (player.x - player.previousX) / dt : 0;
+    player.vx = Math.max(-config.player.speed, Math.min(config.player.speed, velocity));
+    player.previousX = player.x;
     updateEnemies(state, dt);
     updateProjectiles(state, dt);
     if (state.phase === "playing" && state.enemies.every((enemy) => enemy.mode === "dead")) advance(state);
