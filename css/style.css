@@ -1,4 +1,5 @@
 :root {
+  --display-font: "Space Mono", "Courier New", monospace;
   color-scheme: dark;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: #080c18;
@@ -19,7 +20,7 @@ body {
 main { width: min(100%, 960px); text-align: center; }
 header { margin-bottom: 28px; }
 .eyebrow { color: #70e6ef; font-size: 11px; letter-spacing: .22em; }
-h1 { margin: 10px 0; font-size: clamp(32px, 6vw, 56px); letter-spacing: -.04em; }
+h1 { margin: 10px 0; font-family: var(--display-font); font-size: clamp(30px, 6vw, 56px); letter-spacing: -.06em; }
 header > p:last-child, .controls, footer { color: #9baac5; }
 canvas {
   display: block;
@@ -37,14 +38,23 @@ kbd { padding: 3px 7px; border: 1px solid #34425b; border-radius: 4px; font: inh
 footer { font-size: 11px; letter-spacing: .08em; }
 
 .hud { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; text-align: left; }
-.hud > div { color: #9baac5; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; }
+.hud > div { color: #9baac5; font-family: var(--display-font); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; }
 .hud strong { display: block; color: #edf5ff; font-size: clamp(12px, 2.5vw, 20px); margin-top: 5px; font-variant-numeric: tabular-nums; }
+.hud #lives { display: flex; align-items: center; gap: 6px; min-height: 30px; }
+.life-icon { display: block; width: 22px; height: 27px; }
+.life-icon.is-lost { opacity: .2; filter: grayscale(1); }
 .arena { position: relative; }
-.overlay { position: absolute; inset: 0; display: grid; place-items: center; background: #080c18b8; border-radius: 12px; padding: 16px; }
+.overlay { --status-color: #70e6ef; position: absolute; inset: 0; display: grid; place-items: center; background: #080c18cc; border-radius: 12px; padding: 16px; }
+.overlay[data-state="levelclear"], .overlay[data-state="won"] { --status-color: #79f2bd; }
+.overlay[data-state="respawning"] { --status-color: #ffb45e; }
+.overlay[data-state="gameover"] { --status-color: #ff7e96; }
 [hidden] { display: none !important; }
-.status-card { max-width: 420px; }
-h2 { font-size: clamp(22px, 4vw, 36px); margin: 0 0 12px; }
+.status-card { width: min(100%, 480px); padding: 28px; border: 1px solid #34425b; border-top: 3px solid var(--status-color); border-radius: 8px; background: #101827; box-shadow: 0 16px 50px #0008; }
+h2 { font-family: var(--display-font); color: var(--status-color); font-size: clamp(20px, 3.5vw, 30px); letter-spacing: -.04em; margin: 0 0 12px; }
 .status-card p { color: #c3cee2; line-height: 1.5; }
+.status-card .status-kicker { color: var(--status-color); font-family: var(--display-font); font-size: 10px; letter-spacing: .16em; margin: 0 0 12px; }
+.status-card button { font-family: var(--display-font); border-color: var(--status-color); background: var(--status-color); margin-top: 8px; font-weight: 700; }
+.status-card button:hover { filter: brightness(1.15); }
 button { cursor: pointer; border: 1px solid #70e6ef; border-radius: 6px; padding: 10px 18px; background: #70e6ef; color: #080c18; font: inherit; font-weight: 650; }
 button:hover { background: #b1f8fd; }
 button:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
@@ -58,6 +68,10 @@ button:disabled { opacity: .4; cursor: default; }
   header { margin-bottom: 18px; }
   .hud { gap: 6px; }
   .hud > div { font-size: 9px; letter-spacing: 0; }
+  .hud #lives { min-height: 19px; gap: 4px; }
+  .life-icon { width: 16px; height: 19px; }
+  .status-card { padding: 12px 16px; }
+  .status-card .status-kicker { font-size: 8px; margin-bottom: 6px; }
   .status-card p { font-size: 12px; margin: 8px 0; }
   .status-card button { padding: 8px 14px; }
   h2 { margin-bottom: 6px; }

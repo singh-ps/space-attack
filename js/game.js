@@ -6,16 +6,17 @@ const state = GameSystems.create(GAME_CONFIG);
 const keys = new Set();
 const overlay = document.querySelector("#overlay");
 const title = document.querySelector("#status-title");
+const kicker = document.querySelector("#status-kicker");
 const message = document.querySelector("#status-message");
 const action = document.querySelector("#start-game");
 const pauseButton = document.querySelector("#pause-game");
 const scoreDisplay = document.querySelector("#score");
 const livesDisplay = document.querySelector("#lives");
 const levelDisplay = document.querySelector("#level");
-const weaponDisplay = document.querySelector("#weapon");
 let paused = false;
 let lastFrame = 0;
 let displayedStatus = "";
+let displayedLives = -1;
 canvas.width = GAME_CONFIG.width;
 canvas.height = GAME_CONFIG.height;
 const stars = Array.from({ length: 100 }, () => ({
@@ -140,9 +141,13 @@ function draw() {
 
 function syncUI() {
   scoreDisplay.textContent = String(state.score).padStart(6, "0");
-  livesDisplay.textContent = `${"♥ ".repeat(state.lives).trim() || "—"} (${state.lives})`;
+  if (displayedLives !== state.lives) {
+    displayedLives = state.lives;
+    livesDisplay.innerHTML = Array.from({ length: GAME_CONFIG.player.lives }, (_, index) =>
+      `<img class="life-icon${index >= state.lives ? " is-lost" : ""}" src="./assets/ship.svg" alt="">`).join("");
+    livesDisplay.setAttribute("aria-label", `${state.lives} ${state.lives === 1 ? "ship" : "ships"} remaining`);
+  }
   levelDisplay.textContent = `${state.level} / ${GAME_CONFIG.levels.length}`;
-  weaponDisplay.textContent = state.player.cooldown > 0 ? "Cooling" : "Ready";
   pauseButton.disabled = !["playing", "respawning", "levelclear"].includes(state.phase);
   pauseButton.textContent = paused ? "Resume" : "Pause";
   overlay.hidden = !paused && state.phase === "playing";
@@ -150,20 +155,22 @@ function syncUI() {
   const statusKey = `${paused}:${state.phase}:${state.level}:${state.lives}:${state.score}`;
   if (displayedStatus === statusKey) return;
   displayedStatus = statusKey;
+  overlay.dataset.state = paused ? "paused" : state.phase;
   if (paused) {
+    kicker.textContent = "FLIGHT ON HOLD";
     title.textContent = "Paused";
     message.textContent = "Take a breath. Resume when you’re ready.";
     action.textContent = "Resume game";
   } else {
     const statuses = {
-      ready: ["Ready, pilot?", "Clear five formations. Three lives. Make every shot count.", "Start game"],
-      respawning: ["Ship lost", `${state.lives} ${state.lives === 1 ? "life" : "lives"} remaining. Preparing your next ship…`, ""],
-      levelclear: ["Level complete", `Next up: level ${state.level + 1}. Faster enemies incoming.`, ""],
-      gameover: ["Game over", `Final score: ${state.score.toLocaleString()}. Try another flight.`, "Play again"],
-      won: ["Sector secured", `All five levels cleared! Final score: ${state.score.toLocaleString()}.`, "Play again"],
+      ready: ["MISSION BRIEFING", "Ready, pilot?", "Clear five formations. Three ships. Make every shot count.", "Launch"],
+      respawning: ["HULL BREACH", "Ship lost", `${state.lives} ${state.lives === 1 ? "ship" : "ships"} left. Relaunching with shields.`, ""],
+      levelclear: ["SECTOR SECURED", `Level ${state.level} complete`, `Formation eliminated. Level ${state.level + 1} incoming. Stay sharp.`, ""],
+      gameover: ["MISSION ENDED", "Game over", `Fleet lost in level ${state.level}. Final score: ${state.score.toLocaleString()}.`, "Try again"],
+      won: ["MISSION ACCOMPLISHED", "Sector secured", `All five levels cleared! Final score: ${state.score.toLocaleString()}.`, "Fly again"],
     };
     const status = statuses[state.phase];
-    if (status) [title.textContent, message.textContent, action.textContent] = status;
+    if (status) [kicker.textContent, title.textContent, message.textContent, action.textContent] = status;
   }
 }
 
