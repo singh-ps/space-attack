@@ -35,3 +35,30 @@ canvas:focus-visible { outline: 2px solid #70e6ef; outline-offset: 4px; }
 .controls { font-size: 13px; line-height: 2.2; margin: 20px 0; }
 kbd { padding: 3px 7px; border: 1px solid #34425b; border-radius: 4px; font: inherit; color: #edf5ff; }
 footer { font-size: 11px; letter-spacing: .08em; }
+
+.hud { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; text-align: left; }
+.hud > div { color: #9baac5; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; }
+.hud strong { display: block; color: #edf5ff; font-size: clamp(12px, 2.5vw, 20px); margin-top: 5px; font-variant-numeric: tabular-nums; }
+.arena { position: relative; }
+.overlay { position: absolute; inset: 0; display: grid; place-items: center; background: #080c18b8; border-radius: 12px; padding: 16px; }
+[hidden] { display: none !important; }
+.status-card { max-width: 420px; }
+h2 { font-size: clamp(22px, 4vw, 36px); margin: 0 0 12px; }
+.status-card p { color: #c3cee2; line-height: 1.5; }
+button { cursor: pointer; border: 1px solid #70e6ef; border-radius: 6px; padding: 10px 18px; background: #70e6ef; color: #080c18; font: inherit; font-weight: 650; }
+button:hover { background: #b1f8fd; }
+button:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+button:disabled { opacity: .4; cursor: default; }
+#pause-game { padding: 8px 12px; background: transparent; color: #70e6ef; font-size: 12px; }
+.delta { color: #79f2bd; }
+.alpha { color: #b9a0ff; }
+.omega { color: #ffb45e; }
+@media (max-width: 540px) {
+  body { padding: 20px 10px; }
+  header { margin-bottom: 18px; }
+  .hud { gap: 6px; }
+  .hud > div { font-size: 9px; letter-spacing: 0; }
+  .status-card p { font-size: 12px; margin: 8px 0; }
+  .status-card button { padding: 8px 14px; }
+  h2 { margin-bottom: 6px; }
+}

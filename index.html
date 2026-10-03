@@ -7,20 +7,38 @@
     <meta name="description" content="Space Attack — an HTML5 canvas space game.">
     <title>Space Attack</title>
     <link rel="stylesheet" href="./css/style.css">
+    <script src="./js/config.js" defer></script>
+    <script src="./js/systems.js" defer></script>
     <script src="./js/game.js" defer></script>
   </head>
   <body>
     <main>
       <header>
-        <p class="eyebrow">HTML5 CANVAS · FLIGHT TEST</p>
+        <p class="eyebrow">FIVE SECTORS · ONE MISSION</p>
         <h1>Space Attack</h1>
-        <p>Your ship is ready. The adventure starts here.</p>
+        <p>Break the formation. Survive the dive.</p>
       </header>
-      <canvas id="game" width="960" height="540" tabindex="0" aria-label="Space Attack flight test. Move with arrow keys or A and D. Fire with Space. On touch screens, drag to move and tap to fire.">
+      <div class="hud" aria-label="Game statistics">
+        <div>Score<strong id="score">000000</strong></div>
+        <div>Lives<strong id="lives">♥ ♥ ♥ (3)</strong></div>
+        <div>Level<strong id="level">1 / 5</strong></div>
+        <div>Weapon<strong id="weapon">Ready</strong></div>
+        <button id="pause-game" type="button" disabled>Pause</button>
+      </div>
+      <div class="arena">
+      <canvas id="game" width="960" height="540" tabindex="0" aria-label="Space Attack. Move with arrow keys or A and D. Press Space once per shot. On touch screens, drag to move and tap to fire.">
         Your browser needs canvas support to play Space Attack.
       </canvas>
-      <p class="controls"><kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd> to move · <kbd>Space</kbd> to fire<br>Touch: drag to move · tap to fire</p>
-      <footer>Flight test 001 · More coming soon</footer>
+      <div id="overlay" class="overlay">
+        <div class="status-card">
+          <h2 id="status-title">Ready, pilot?</h2>
+          <p id="status-message" role="status" aria-live="polite">Clear five formations. Three lives. Make every shot count.</p>
+          <button id="start-game" type="button">Start game</button>
+        </div>
+      </div>
+      </div>
+      <p class="controls"><kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd> to move · press <kbd>Space</kbd> for each shot · <kbd>Esc</kbd> to pause<br>Touch: drag to move · tap to fire</p>
+      <footer><span class="delta">Delta</span> · <span class="alpha">Alpha</span> · <span class="omega">Omega</span> · Double points for kills in flight</footer>
     </main>
   </body>
 </html>

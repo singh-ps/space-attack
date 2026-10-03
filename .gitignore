@@ -1,4 +1,5 @@
 .DS_Store
+game-ref.png
 node_modules/
 .env
 .env.*
